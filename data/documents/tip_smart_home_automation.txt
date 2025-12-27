@@ -1,0 +1,8 @@
+Smart Home Automation Tips
+- Group lights and plug loads into scenes that shut down together when arming security or leaving home.
+- Use occupancy sensors in hallways and bathrooms to prevent lights from staying on when rooms are empty.
+- Schedule heavy loads (EV charging, dishwashers, dryers) during off-peak hours via smart plugs or panel controls.
+- Automate thermostat setbacks tied to geofencing so temperature relaxes when the last person leaves.
+- Enable energy monitoring dashboards to identify rogue devices and optimize standby power usage.
+- Integrate window sensors to pause HVAC when windows are open to avoid wasting conditioned air.
+

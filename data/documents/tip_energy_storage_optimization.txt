@@ -1,0 +1,8 @@
+Energy Storage Optimization
+- Configure battery dispatch to shave peak demand charges and follow time-of-use price signals.
+- Reserve a backup state-of-charge buffer while using the remaining capacity for daily cycling.
+- Align battery charging with surplus solar production and discharging with evening ramps.
+- Limit high C-rate charging/discharging when temperatures are extreme to extend battery lifespan.
+- Use state-of-health analytics to adjust depth-of-discharge limits as cells age.
+- Coordinate storage with load control (HVAC preconditioning, EV charging) for stacked savings.
+

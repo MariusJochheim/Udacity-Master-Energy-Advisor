@@ -1,0 +1,8 @@
+HVAC Optimization Strategies
+- Schedule regular filter replacements to keep airflow unobstructed and avoid compressor overwork.
+- Use smart thermostats with occupancy detection to trim setpoints in unoccupied zones without manual intervention.
+- Seal and insulate ducts in attics or crawl spaces to reduce thermal losses and improve delivered BTU efficiency.
+- Enable economizer or “free cooling” modes when outdoor air meets temperature and humidity targets.
+- Stage or modulate compressors and fans rather than running single-speed units at full load.
+- Commission systems seasonally to recalibrate setpoints, verify refrigerant charge, and balance airflow.
+

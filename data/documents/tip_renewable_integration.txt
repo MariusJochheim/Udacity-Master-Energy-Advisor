@@ -1,0 +1,8 @@
+Renewable Energy Integration
+- Right-size PV arrays by matching production to daytime loads and storage capacity to avoid curtailment.
+- Use load shifting (water heating, HVAC precooling) to consume solar output when generation peaks.
+- Configure inverters for voltage ride-through and grid-support modes to improve interconnection stability.
+- Combine solar with heat pump water heaters to convert excess kWh into stored thermal energy.
+- Track utility export tariffs and adjust self-consumption targets when feed-in rates change.
+- Maintain clear shading paths and clean modules to preserve expected capacity factor over time.
+

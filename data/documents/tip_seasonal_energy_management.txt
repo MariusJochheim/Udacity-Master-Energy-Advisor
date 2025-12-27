@@ -1,0 +1,8 @@
+Seasonal Energy Management
+- In summer, precool during off-peak hours and tighten blinds to cut solar heat gain in the afternoon.
+- In winter, use programmable setbacks at night and open south-facing blinds to capture passive solar heat.
+- Adjust ceiling fan direction: counterclockwise in summer for cooling, clockwise in winter for destratification.
+- Service HVAC and heat pump defrost cycles before seasonal peaks to maintain coefficient of performance.
+- Calibrate humidification/dehumidification targets to reduce latent loads and improve comfort efficiency.
+- Update irrigation schedules seasonally to avoid overwatering and wasted pump energy.
+

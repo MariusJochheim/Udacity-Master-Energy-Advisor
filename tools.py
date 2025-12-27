@@ -260,7 +260,7 @@ def search_energy_tips(query: str, max_results: int = 5) -> Dict[str, Any]:
             splits = text_splitter.split_documents(documents)
             
             # Create vector store
-            embeddings = OpenAIEmbeddings()
+            embeddings = OpenAIEmbeddings(base_url="https://openai.vocareum.com/v1")
             vectorstore = Chroma.from_documents(
                 documents=splits,
                 embedding=embeddings,
@@ -268,7 +268,7 @@ def search_energy_tips(query: str, max_results: int = 5) -> Dict[str, Any]:
             )
         else:
             # Load existing vector store
-            embeddings = OpenAIEmbeddings()
+            embeddings = OpenAIEmbeddings(base_url="https://openai.vocareum.com/v1")
             vectorstore = Chroma(
                 persist_directory=persist_directory,
                 embedding_function=embeddings

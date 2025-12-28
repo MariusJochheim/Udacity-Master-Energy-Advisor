@@ -4,6 +4,7 @@ Tools for EcoHome Energy Advisor Agent
 import os
 import json
 import random
+import math
 from datetime import datetime, timedelta
 from typing import Dict, Any
 from langchain_core.tools import tool
@@ -16,7 +17,6 @@ from models.energy import DatabaseManager
 # Initialize database manager
 db_manager = DatabaseManager()
 
-# TODO: Implement get_weather_forecast tool
 @tool
 def get_weather_forecast(location: str, days: int = 3) -> Dict[str, Any]:
     """
@@ -50,9 +50,67 @@ def get_weather_forecast(location: str, days: int = 3) -> Dict[str, Any]:
             ]
         }
     """
-    # Mock weather API or call OpenWeatherMap or similar
-    
-    return 
+    # Mocking Weather API by creating data on the fly    
+    try:
+        # Keep the mock deterministic per location/day to make reasoning repeatable
+        days = max(1, min(days, 7))
+        now = datetime.now().replace(minute=0, second=0, microsecond=0)
+        rng = random.Random(f"{location}-{now.date()}-{days}")
+
+        base_temp = rng.uniform(12, 30)
+        base_humidity = rng.randint(40, 75)
+        base_wind = rng.uniform(3, 18)
+        condition_pool = ["sunny", "partly_cloudy", "cloudy", "rainy", "stormy"]
+
+        hourly_data = []
+        for day_offset in range(days):
+            day_condition = rng.choices(
+                condition_pool,
+                weights=[0.35, 0.32, 0.18, 0.12, 0.03],
+                k=1
+            )[0]
+
+            for hour in range(24):
+                timestamp = now + timedelta(days=day_offset, hours=hour)
+                temp_variation = 6 * math.sin(((hour - 6) / 24) * 2 * math.pi)
+                temperature_c = round(base_temp + temp_variation + rng.uniform(-1.5, 1.5), 1)
+
+                solar_factor = max(0, math.sin(math.pi * (hour - 6) / 12))
+                solar_irradiance = round(900 * solar_factor * rng.uniform(0.85, 1.05), 1)
+
+                humidity = max(20, min(95, base_humidity + rng.randint(-10, 10)))
+                wind_speed = round(max(0, base_wind + rng.uniform(-2, 3)), 1)
+
+                condition = day_condition
+                if solar_irradiance == 0 and condition == "sunny":
+                    condition = "clear_night"
+
+                hourly_data.append({
+                    "timestamp": timestamp.isoformat(),
+                    "hour": timestamp.hour,
+                    "temperature_c": temperature_c,
+                    "condition": condition,
+                    "solar_irradiance": solar_irradiance,
+                    "humidity": humidity,
+                    "wind_speed": wind_speed
+                })
+
+        current = hourly_data[0] if hourly_data else {}
+
+        return {
+            "location": location,
+            "forecast_days": days,
+            "generated_at": now.isoformat(),
+            "current": {
+                "temperature_c": current.get("temperature_c"),
+                "condition": current.get("condition"),
+                "humidity": current.get("humidity"),
+                "wind_speed": current.get("wind_speed")
+            },
+            "hourly": hourly_data
+        }
+    except Exception as e:
+        return {"error": f"Failed to generate weather forecast: {str(e)}"}
 
 # TODO: Implement get_electricity_prices tool
 @tool

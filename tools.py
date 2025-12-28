@@ -6,6 +6,7 @@ import json
 import random
 import math
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Dict, Any
 from langchain_core.tools import tool
 from langchain_community.vectorstores import Chroma
@@ -329,14 +330,17 @@ def search_energy_tips(query: str, max_results: int = 5) -> Dict[str, Any]:
         
         # Load documents if vector store doesn't exist
         if not os.path.exists(os.path.join(persist_directory, "chroma.sqlite3")):
-            # Load documents
             documents = []
-            for doc_path in ["data/documents/tip_device_best_practices.txt", "data/documents/tip_energy_savings.txt"]:
-                if os.path.exists(doc_path):
-                    loader = TextLoader(doc_path)
-                    docs = loader.load()
-                    documents.extend(docs)
-            
+            doc_dir = Path("data/documents")
+            doc_paths = sorted(
+                [p for p in doc_dir.glob("**/*") if p.is_file() and p.suffix.lower() in {".txt", ".md"}]
+            )
+
+            for doc_path in doc_paths:
+                loader = TextLoader(str(doc_path))
+                docs = loader.load()
+                documents.extend(docs)
+
             # Split documents
             text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
             splits = text_splitter.split_documents(documents)

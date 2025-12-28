@@ -77,16 +77,12 @@ class Agent:
     def _call_tools(self, state: dict):
         """Tool node: execute requested tools and append ToolMessages."""
         last = state["messages"][-1]
-        tool_calls = getattr(last, "tool_calls", []) or []
+        tool_calls = self._get_tool_calls(last)
         tool_messages: List[ToolMessage] = []
 
         for call in tool_calls:
-            name = call["function"]["name"]
-            args_raw = call["function"].get("arguments") or "{}"
-            try:
-                args = json.loads(args_raw) if isinstance(args_raw, str) else args_raw
-            except Exception:
-                args = {}
+            name = call.get("name")
+            args = call.get("args", {})
             tool = self.tool_map.get(name)
             if not tool:
                 result = {"error": f"Tool '{name}' not found"}
@@ -99,7 +95,7 @@ class Agent:
             tool_messages.append(
                 ToolMessage(
                     content=json.dumps(result),
-                    name=name,
+                    name=name or "unknown_tool",
                     tool_call_id=call.get("id"),
                 )
             )
@@ -109,6 +105,36 @@ class Agent:
     def _route_from_chat(self, state: dict) -> str:
         """Decide whether to call tools or end based on model output."""
         last = state["messages"][-1]
-        if getattr(last, "tool_calls", None):
+        if self._get_tool_calls(last):
             return "tools"
         return "__end__"
+
+    def _get_tool_calls(self, message):
+        """Normalize tool call extraction across model response shapes."""
+        calls = []
+        raw_calls = []
+        if getattr(message, "tool_calls", None):
+            raw_calls.extend(message.tool_calls or [])
+        additional = getattr(message, "additional_kwargs", {}) or {}
+        raw_calls.extend(additional.get("tool_calls") or [])
+        func_call = additional.get("function_call") or getattr(message, "function_call", None)
+        if func_call:
+            raw_calls.append({"id": func_call.get("id"), "function": func_call})
+
+        normalized = []
+        for call in raw_calls:
+            if not isinstance(call, dict):
+                continue
+            # LangChain tool_call shape: {'name': ..., 'args': {...}, 'id': ...}
+            if "name" in call and "args" in call:
+                normalized.append({"id": call.get("id"), "name": call.get("name"), "args": call.get("args")})
+                continue
+            func = call.get("function") or {}
+            name = func.get("name")
+            args_raw = func.get("arguments") or "{}"
+            try:
+                args = json.loads(args_raw) if isinstance(args_raw, str) else args_raw
+            except Exception:
+                args = {}
+            normalized.append({"id": call.get("id"), "name": name, "args": args})
+        return normalized

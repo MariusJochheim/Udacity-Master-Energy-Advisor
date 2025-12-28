@@ -1,8 +1,10 @@
 import os
+from typing import List, TypedDict
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
-from langchain_core.messages import SystemMessage, HumanMessage
-from langgraph.prebuilt.chat_agent_executor import create_function_calling_executor
+from langchain_core.messages import SystemMessage, HumanMessage, BaseMessage
+from langgraph.graph import StateGraph, END
+from langgraph.prebuilt import ToolNode, tools_condition
 from tools import TOOL_KIT
 
 load_dotenv()
@@ -10,6 +12,10 @@ load_dotenv()
 
 class Agent:
     def __init__(self, instructions:str, model:str="gpt-4o-mini"):
+        class AgentState(TypedDict):
+            messages: List[BaseMessage]
+
+        self.AgentState = AgentState
 
         # Initialize the LLM
         llm = ChatOpenAI(
@@ -20,8 +26,21 @@ class Agent:
         )
 
         self.system_message = SystemMessage(content=instructions)
-        # Build a graph that uses OpenAI function calling to route to tools
-        self.graph = create_function_calling_executor(model=llm, tools=TOOL_KIT)
+        # Bind tools to the model for function calling
+        self.model = llm.bind_tools(TOOL_KIT)
+
+        # Build an explicit LangGraph with schema, nodes, and edges
+        graph = StateGraph(self.AgentState)
+        graph.add_node("chat", self._call_model)
+        graph.add_node("tools", ToolNode(TOOL_KIT))
+        graph.add_edge("tools", "chat")
+        graph.add_conditional_edges(
+            "chat",
+            tools_condition,
+            {"tools": "tools", "__end__": END},
+        )
+        graph.set_entry_point("chat")
+        self.graph = graph.compile()
 
     def invoke(self, question: str, context:str=None) -> str:
         """
@@ -43,14 +62,13 @@ class Agent:
         messages.append(HumanMessage(content=question))
         
         # Get response from the agent
-        response = self.graph.invoke(
-            input= {
-                "messages": messages
-            }
-        )
-        
-        return response
+        return self.graph.invoke({"messages": messages})
 
     def get_agent_tools(self):
         """Get list of available tools for the Energy Advisor"""
         return [t.name for t in TOOL_KIT]
+
+    def _call_model(self, state: dict):
+        """LLM node: take messages, call model, append the AI message."""
+        ai_message = self.model.invoke(state["messages"])
+        return {"messages": state["messages"] + [ai_message]}

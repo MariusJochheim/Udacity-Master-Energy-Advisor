@@ -1,8 +1,8 @@
 import os
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
-from langchain_core.messages import SystemMessage
-from langgraph.prebuilt import create_react_agent
+from langchain_core.messages import SystemMessage, HumanMessage
+from langgraph.prebuilt.chat_agent_executor import create_function_calling_executor
 from tools import TOOL_KIT
 
 load_dotenv()
@@ -19,13 +19,9 @@ class Agent:
             api_key=os.getenv("VOCAREUM_API_KEY")
         )
 
-        # Create the Energy Advisor agent
-        self.graph = create_react_agent(
-            name="energy_advisor",
-            prompt=SystemMessage(content=instructions),
-            model=llm,
-            tools=TOOL_KIT,
-        )
+        self.system_message = SystemMessage(content=instructions)
+        # Build a graph that uses OpenAI function calling to route to tools
+        self.graph = create_function_calling_executor(model=llm, tools=TOOL_KIT)
 
     def invoke(self, question: str, context:str=None) -> str:
         """
@@ -33,22 +29,18 @@ class Agent:
         
         Args:
             question (str): The user's question about energy optimization
-            location (str): Location for weather and pricing data
+            context (str): Optional additional context (e.g., location)
         
         Returns:
             str: The advisor's response with recommendations
         """
         
-        messages = []
+        messages = [self.system_message]
         if context:
             # Add some context to the question as a system message
-            messages.append(
-                ("system", context)
-            )
+            messages.append(SystemMessage(content=context))
 
-        messages.append(
-            ("user", question)
-        )
+        messages.append(HumanMessage(content=question))
         
         # Get response from the agent
         response = self.graph.invoke(
